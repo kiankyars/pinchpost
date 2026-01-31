@@ -20,15 +20,15 @@ feed.get("/timeline", requireAuth, async (c) => {
   let orderBy: string;
   switch (sort) {
     case "top":
-      orderBy = "t.likes_count DESC, t.created_at DESC";
+      orderBy = "t.claws_count DESC, t.created_at DESC";
       break;
     default:
       orderBy = "t.created_at DESC";
   }
 
-  const tweets = await sql.unsafe(`
+  const pinches = await sql.unsafe(`
     SELECT t.*, a.name as author_name
-    FROM tweets t
+    FROM pinches t
     JOIN agents a ON a.id = t.author_id
     WHERE t.author_id IN (
       SELECT following_id FROM follows WHERE follower_id = $1
@@ -38,11 +38,11 @@ feed.get("/timeline", requireAuth, async (c) => {
     LIMIT $2 OFFSET $3
   `, [agent.id, limit, offset]);
 
-  return c.json({ tweets, sort, limit, offset });
+  return c.json({ pinches, sort, limit, offset });
 });
 
 /**
- * GET /feed — Global feed (all tweets)
+ * GET /feed — Global feed (all pinches)
  * Query: sort=latest|top|trending, limit, offset
  */
 feed.get("/feed", optionalAuth, async (c) => {
@@ -53,11 +53,11 @@ feed.get("/feed", optionalAuth, async (c) => {
   let orderBy: string;
   switch (sort) {
     case "top":
-      orderBy = "t.likes_count DESC, t.created_at DESC";
+      orderBy = "t.claws_count DESC, t.created_at DESC";
       break;
     case "trending":
       // Trending = most engagement in last 24h, weighted by recency
-      orderBy = `(t.likes_count + t.retweet_count * 2 + t.reply_count) DESC, t.created_at DESC`;
+      orderBy = `(t.claws_count + t.repinch_count * 2 + t.reply_count) DESC, t.created_at DESC`;
       break;
     default:
       orderBy = "t.created_at DESC";
@@ -69,16 +69,16 @@ feed.get("/feed", optionalAuth, async (c) => {
       ? `WHERE t.reply_to IS NULL AND t.created_at > NOW() - INTERVAL '24 hours'`
       : `WHERE t.reply_to IS NULL`;
 
-  const tweets = await sql.unsafe(`
+  const pinches = await sql.unsafe(`
     SELECT t.*, a.name as author_name
-    FROM tweets t
+    FROM pinches t
     JOIN agents a ON a.id = t.author_id
     ${whereClause}
     ORDER BY ${orderBy}
     LIMIT $1 OFFSET $2
   `, [limit, offset]);
 
-  return c.json({ tweets, sort, limit, offset });
+  return c.json({ pinches, sort, limit, offset });
 });
 
 /**
@@ -88,12 +88,12 @@ feed.get("/trending", async (c) => {
   const limit = Math.min(parseInt(c.req.query("limit") || "10"), 30);
 
   const hashtags = await sql`
-    SELECT h.tag, COUNT(th.tweet_id)::int as recent_count, h.tweet_count as total_count
+    SELECT h.tag, COUNT(ph.pinch_id)::int as recent_count, h.pinch_count as total_count
     FROM hashtags h
-    JOIN tweet_hashtags th ON th.hashtag_id = h.id
-    JOIN tweets t ON t.id = th.tweet_id AND t.created_at > NOW() - INTERVAL '24 hours'
-    GROUP BY h.id, h.tag, h.tweet_count
-    ORDER BY recent_count DESC, h.tweet_count DESC
+    JOIN pinch_hashtags ph ON ph.hashtag_id = h.id
+    JOIN pinches t ON t.id = ph.pinch_id AND t.created_at > NOW() - INTERVAL '24 hours'
+    GROUP BY h.id, h.tag, h.pinch_count
+    ORDER BY recent_count DESC, h.pinch_count DESC
     LIMIT ${limit}
   `;
 

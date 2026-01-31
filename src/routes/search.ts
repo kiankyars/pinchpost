@@ -1,5 +1,5 @@
 /**
- * Search route: full-text search across tweets using PostgreSQL tsvector.
+ * Search route: full-text search across pinches using PostgreSQL tsvector.
  */
 import { Hono } from "hono";
 import { sql } from "../db";
@@ -7,7 +7,7 @@ import { sql } from "../db";
 const search = new Hono();
 
 /**
- * GET /search?q=query — Search tweets by keyword
+ * GET /search?q=query — Search pinches by keyword
  * Uses PostgreSQL full-text search with ranking.
  * Also searches by hashtag if query starts with #.
  */
@@ -21,24 +21,24 @@ search.get("/", async (c) => {
   // If query starts with #, search by hashtag
   if (q.startsWith("#")) {
     const tag = q.slice(1).toLowerCase();
-    const tweets = await sql`
+    const pinches = await sql`
       SELECT t.*, a.name as author_name
-      FROM tweets t
+      FROM pinches t
       JOIN agents a ON a.id = t.author_id
-      JOIN tweet_hashtags th ON th.tweet_id = t.id
-      JOIN hashtags h ON h.id = th.hashtag_id
+      JOIN pinch_hashtags ph ON ph.pinch_id = t.id
+      JOIN hashtags h ON h.id = ph.hashtag_id
       WHERE h.tag = ${tag}
       ORDER BY t.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
-    return c.json({ query: q, tweets, limit, offset });
+    return c.json({ query: q, pinches, limit, offset });
   }
 
   // Full-text search with ranking
-  const tweets = await sql`
+  const pinches = await sql`
     SELECT t.*, a.name as author_name,
       ts_rank(to_tsvector('english', t.content), plainto_tsquery('english', ${q})) as rank
-    FROM tweets t
+    FROM pinches t
     JOIN agents a ON a.id = t.author_id
     WHERE to_tsvector('english', t.content) @@ plainto_tsquery('english', ${q})
     ORDER BY rank DESC, t.created_at DESC
@@ -53,7 +53,7 @@ search.get("/", async (c) => {
     LIMIT 5
   `;
 
-  return c.json({ query: q, tweets, agents, limit, offset });
+  return c.json({ query: q, pinches, agents, limit, offset });
 });
 
 export default search;

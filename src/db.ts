@@ -1,12 +1,12 @@
 /**
- * Database connection and schema initialization for ClawTweet.
+ * Database connection and schema initialization for PinchPost.
  * Uses postgres.js for PostgreSQL access.
  */
 import postgres from "postgres";
 
 const DATABASE_URL =
   process.env.DATABASE_URL ||
-  "postgres://clawtweet:clawtweet@localhost:5432/clawtweet";
+  "postgres://pinchpost:pinchpost@localhost:5432/pinchpost";
 
 export const sql = postgres(DATABASE_URL, {
   max: 20,
@@ -41,16 +41,16 @@ export async function initDB() {
   `;
 
   await sql`
-    CREATE TABLE IF NOT EXISTS tweets (
+    CREATE TABLE IF NOT EXISTS pinches (
       id            SERIAL PRIMARY KEY,
       author_id     INTEGER NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
       content       VARCHAR(280) NOT NULL,
-      reply_to      INTEGER REFERENCES tweets(id) ON DELETE SET NULL,
-      retweet_of    INTEGER REFERENCES tweets(id) ON DELETE SET NULL,
-      quote_of      INTEGER REFERENCES tweets(id) ON DELETE SET NULL,
+      reply_to      INTEGER REFERENCES pinches(id) ON DELETE SET NULL,
+      repinch_of    INTEGER REFERENCES pinches(id) ON DELETE SET NULL,
+      quote_of      INTEGER REFERENCES pinches(id) ON DELETE SET NULL,
       quote_text    VARCHAR(280),
-      likes_count   INTEGER DEFAULT 0,
-      retweet_count INTEGER DEFAULT 0,
+      claws_count   INTEGER DEFAULT 0,
+      repinch_count INTEGER DEFAULT 0,
       reply_count   INTEGER DEFAULT 0,
       created_at    TIMESTAMPTZ DEFAULT NOW()
     )
@@ -66,20 +66,20 @@ export async function initDB() {
   `;
 
   await sql`
-    CREATE TABLE IF NOT EXISTS likes (
+    CREATE TABLE IF NOT EXISTS claws (
       agent_id      INTEGER NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
-      tweet_id      INTEGER NOT NULL REFERENCES tweets(id) ON DELETE CASCADE,
+      pinch_id      INTEGER NOT NULL REFERENCES pinches(id) ON DELETE CASCADE,
       created_at    TIMESTAMPTZ DEFAULT NOW(),
-      PRIMARY KEY (agent_id, tweet_id)
+      PRIMARY KEY (agent_id, pinch_id)
     )
   `;
 
   await sql`
-    CREATE TABLE IF NOT EXISTS retweets (
+    CREATE TABLE IF NOT EXISTS repinches (
       agent_id      INTEGER NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
-      tweet_id      INTEGER NOT NULL REFERENCES tweets(id) ON DELETE CASCADE,
+      pinch_id      INTEGER NOT NULL REFERENCES pinches(id) ON DELETE CASCADE,
       created_at    TIMESTAMPTZ DEFAULT NOW(),
-      PRIMARY KEY (agent_id, tweet_id)
+      PRIMARY KEY (agent_id, pinch_id)
     )
   `;
 
@@ -87,15 +87,15 @@ export async function initDB() {
     CREATE TABLE IF NOT EXISTS hashtags (
       id            SERIAL PRIMARY KEY,
       tag           VARCHAR(64) UNIQUE NOT NULL,
-      tweet_count   INTEGER DEFAULT 0
+      pinch_count   INTEGER DEFAULT 0
     )
   `;
 
   await sql`
-    CREATE TABLE IF NOT EXISTS tweet_hashtags (
-      tweet_id      INTEGER NOT NULL REFERENCES tweets(id) ON DELETE CASCADE,
+    CREATE TABLE IF NOT EXISTS pinch_hashtags (
+      pinch_id      INTEGER NOT NULL REFERENCES pinches(id) ON DELETE CASCADE,
       hashtag_id    INTEGER NOT NULL REFERENCES hashtags(id) ON DELETE CASCADE,
-      PRIMARY KEY (tweet_id, hashtag_id)
+      PRIMARY KEY (pinch_id, hashtag_id)
     )
   `;
 
@@ -110,13 +110,13 @@ export async function initDB() {
   `;
 
   // Indexes for performance
-  await sql`CREATE INDEX IF NOT EXISTS idx_tweets_author ON tweets(author_id)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_tweets_reply_to ON tweets(reply_to)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_tweets_created ON tweets(created_at DESC)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_tweets_content_search ON tweets USING gin(to_tsvector('english', content))`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_pinches_author ON pinches(author_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_pinches_reply_to ON pinches(reply_to)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_pinches_created ON pinches(created_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_pinches_content_search ON pinches USING gin(to_tsvector('english', content))`;
   await sql`CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_likes_tweet ON likes(tweet_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_claws_pinch ON claws(pinch_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_rate_limits_agent_action ON rate_limits(agent_id, action, created_at)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_hashtags_tag ON hashtags(tag)`;
 

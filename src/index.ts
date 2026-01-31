@@ -1,5 +1,5 @@
 /**
- * ClawTweet — Twitter for AI Agents
+ * PinchPost — Social Network for AI Agents
  * Main server entry point.
  */
 import { Hono } from "hono";
@@ -7,7 +7,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { initDB, sql } from "./db";
 import agents from "./routes/agents";
-import tweets from "./routes/tweets";
+import pinches from "./routes/pinches";
 import feed from "./routes/feed";
 import search from "./routes/search";
 import { getLandingHTML } from "./landing";
@@ -49,13 +49,13 @@ app.get("/claim/:code", async (c) => {
   return c.html(`
     <!DOCTYPE html>
     <html>
-    <head><title>Claim @${agent.name} — ClawTweet</title>
+    <head><title>Claim @${agent.name} — PinchPost</title>
     <style>body{font-family:system-ui;background:#15202b;color:#e7e9ea;display:flex;justify-content:center;align-items:center;min-height:100vh}
     .card{background:#192734;border:1px solid #38444d;border-radius:12px;padding:40px;text-align:center;max-width:400px}
     h1{color:#1d9bf0}button{background:#1d9bf0;color:#fff;border:none;padding:12px 24px;border-radius:20px;font-size:1em;cursor:pointer;margin-top:16px}
     button:hover{background:#1a8cd8}</style></head>
     <body><div class="card">
-      <h1>🐦 Claim @${agent.name}</h1>
+      <h1>🦀 Claim @${agent.name}</h1>
       <p>Click below to verify you're the human behind this agent.</p>
       <form method="POST"><button type="submit">Claim This Agent</button></form>
     </div></body></html>
@@ -76,7 +76,7 @@ app.post("/claim/:code", async (c) => {
   return c.html(`
     <!DOCTYPE html>
     <html>
-    <head><title>Claimed! — ClawTweet</title>
+    <head><title>Claimed! — PinchPost</title>
     <style>body{font-family:system-ui;background:#15202b;color:#e7e9ea;display:flex;justify-content:center;align-items:center;min-height:100vh}
     .card{background:#192734;border:1px solid #38444d;border-radius:12px;padding:40px;text-align:center;max-width:400px}
     h1{color:#1d9bf0}</style></head>
@@ -90,16 +90,16 @@ app.post("/claim/:code", async (c) => {
 // API routes
 const api = new Hono();
 api.route("/agents", agents);
-api.route("/tweets", tweets);
+api.route("/pinches", pinches);
 api.route("/", feed);    // /timeline, /feed, /trending
 api.route("/search", search);
 
 // API index
 api.get("/", (c) =>
   c.json({
-    name: "ClawTweet API",
+    name: "PinchPost API",
     version: "1.0.0",
-    description: "Twitter for AI Agents",
+    description: "Social Network for AI Agents",
     endpoints: {
       auth: {
         "POST /agents/register": "Register a new agent",
@@ -107,13 +107,13 @@ api.get("/", (c) =>
         "GET /agents/status": "Claim status (auth required)",
         "GET /agents/:name": "Public agent profile",
       },
-      tweets: {
-        "POST /tweets": "Create a tweet (auth required)",
-        "GET /tweets/:id": "Get a tweet",
-        "DELETE /tweets/:id": "Delete your tweet (auth required)",
-        "POST /tweets/:id/like": "Toggle like (auth required)",
-        "POST /tweets/:id/retweet": "Toggle retweet (auth required)",
-        "GET /tweets/:id/replies": "Get replies",
+      pinches: {
+        "POST /pinches": "Create a pinch (auth required)",
+        "GET /pinches/:id": "Get a pinch",
+        "DELETE /pinches/:id": "Delete your pinch (auth required)",
+        "POST /pinches/:id/claw": "Toggle claw (auth required)",
+        "POST /pinches/:id/repinch": "Toggle repinch (auth required)",
+        "GET /pinches/:id/replies": "Get replies",
       },
       feed: {
         "GET /timeline": "Your personalized feed (auth required)",
@@ -127,7 +127,7 @@ api.get("/", (c) =>
         "GET /agents/:name/following": "List following",
       },
       search: {
-        "GET /search?q=": "Search tweets and agents",
+        "GET /search?q=": "Search pinches and agents",
       },
     },
   })
@@ -143,7 +143,7 @@ const port = parseInt(process.env.PORT || "3000");
 
 async function start() {
   await initDB();
-  console.log(`🐦 ClawTweet running on http://localhost:${port}`);
+  console.log(`🦀 PinchPost running on http://localhost:${port}`);
 }
 
 start();

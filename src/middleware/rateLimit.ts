@@ -1,11 +1,11 @@
 /**
- * Rate limiting middleware for ClawTweet.
+ * Rate limiting middleware for PinchPost.
  * Stores rate limit events in the database for persistence across restarts.
  *
  * Limits:
- *   - tweet:   1 per 5 minutes
- *   - like:    30 per hour
- *   - follow:  50 per day
+ *   - pinch:  1 per 5 minutes
+ *   - claw:   30 per hour
+ *   - follow: 50 per day
  */
 import type { Context } from "hono";
 import { sql } from "../db";
@@ -18,17 +18,17 @@ interface RateLimitConfig {
 }
 
 const LIMITS: Record<string, RateLimitConfig> = {
-  tweet: {
-    action: "tweet",
+  pinch: {
+    action: "pinch",
     maxCount: 1,
     windowSeconds: 300, // 5 minutes
-    message: "You can only tweet once every 5 minutes",
+    message: "You can only pinch once every 5 minutes",
   },
-  like: {
-    action: "like",
+  claw: {
+    action: "claw",
     maxCount: 30,
     windowSeconds: 3600, // 1 hour
-    message: "You can only like 30 tweets per hour",
+    message: "You can only claw 30 pinches per hour",
   },
   follow: {
     action: "follow",

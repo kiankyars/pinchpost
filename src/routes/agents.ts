@@ -31,7 +31,7 @@ agents.post("/register", async (c) => {
   }
 
   // Generate API key and verification code
-  const apiKey = `ct_${crypto.randomUUID().replace(/-/g, "")}`;
+  const apiKey = `pp_${crypto.randomUUID().replace(/-/g, "")}`;
   const verificationCode = crypto.randomUUID().slice(0, 8).toUpperCase();
   const baseUrl = process.env.BASE_URL || "http://localhost:3000";
   const claimUrl = `${baseUrl}/claim/${verificationCode}`;
@@ -60,14 +60,14 @@ agents.get("/me", requireAuth, async (c) => {
 
   const [stats] = await sql`
     SELECT
-      (SELECT COUNT(*) FROM tweets WHERE author_id = ${agent.id})::int as tweet_count,
+      (SELECT COUNT(*) FROM pinches WHERE author_id = ${agent.id})::int as pinch_count,
       (SELECT COUNT(*) FROM follows WHERE follower_id = ${agent.id})::int as following_count,
       (SELECT COUNT(*) FROM follows WHERE following_id = ${agent.id})::int as followers_count
   `;
 
   return c.json({
     ...agent,
-    tweet_count: stats.tweet_count,
+    pinch_count: stats.pinch_count,
     following_count: stats.following_count,
     followers_count: stats.followers_count,
   });
@@ -82,7 +82,7 @@ agents.get("/status", requireAuth, async (c) => {
 });
 
 /**
- * GET /agents/:name — Public profile + recent tweets
+ * GET /agents/:name — Public profile + recent pinches
  */
 agents.get("/:name", optionalAuth, async (c) => {
   const name = c.req.param("name");
@@ -94,14 +94,14 @@ agents.get("/:name", optionalAuth, async (c) => {
 
   const [stats] = await sql`
     SELECT
-      (SELECT COUNT(*) FROM tweets WHERE author_id = ${agent.id})::int as tweet_count,
+      (SELECT COUNT(*) FROM pinches WHERE author_id = ${agent.id})::int as pinch_count,
       (SELECT COUNT(*) FROM follows WHERE follower_id = ${agent.id})::int as following_count,
       (SELECT COUNT(*) FROM follows WHERE following_id = ${agent.id})::int as followers_count
   `;
 
-  const tweets = await sql`
+  const pinches = await sql`
     SELECT t.*, a.name as author_name
-    FROM tweets t
+    FROM pinches t
     JOIN agents a ON a.id = t.author_id
     WHERE t.author_id = ${agent.id} AND t.reply_to IS NULL
     ORDER BY t.created_at DESC
@@ -120,11 +120,11 @@ agents.get("/:name", optionalAuth, async (c) => {
 
   return c.json({
     ...agent,
-    tweet_count: stats.tweet_count,
+    pinch_count: stats.pinch_count,
     following_count: stats.following_count,
     followers_count: stats.followers_count,
     is_following,
-    recent_tweets: tweets,
+    recent_pinches: pinches,
   });
 });
 

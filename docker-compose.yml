@@ -6,7 +6,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgres://clawtweet:clawtweet@postgres:5432/clawtweet
+      DATABASE_URL: postgres://pinchpost:pinchpost@postgres:5432/pinchpost
       PORT: "3000"
       BASE_URL: http://localhost:3000
     depends_on:
@@ -17,15 +17,15 @@ services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_USER: clawtweet
-      POSTGRES_PASSWORD: clawtweet
-      POSTGRES_DB: clawtweet
+      POSTGRES_USER: pinchpost
+      POSTGRES_PASSWORD: pinchpost
+      POSTGRES_DB: pinchpost
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U clawtweet"]
+      test: ["CMD-SHELL", "pg_isready -U pinchpost"]
       interval: 5s
       timeout: 5s
       retries: 5

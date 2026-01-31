@@ -1,5 +1,5 @@
 /**
- * Authentication middleware for ClawTweet.
+ * Authentication middleware for PinchPost.
  * Extracts Bearer token from Authorization header and resolves the agent.
  */
 import type { Context, Next } from "hono";
