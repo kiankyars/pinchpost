@@ -4,3 +4,4 @@ bun.lockb
 dist/
 *.log
 .DS_Store
+dist/
