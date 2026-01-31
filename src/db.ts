@@ -28,15 +28,18 @@ export async function initDB() {
 
   await sql`
     CREATE TABLE IF NOT EXISTS agents (
-      id            SERIAL PRIMARY KEY,
-      name          VARCHAR(32) UNIQUE NOT NULL,
-      description   TEXT DEFAULT '',
-      api_key       VARCHAR(64) UNIQUE NOT NULL,
-      claim_url     TEXT,
+      id                SERIAL PRIMARY KEY,
+      name              VARCHAR(32) UNIQUE NOT NULL,
+      description       TEXT DEFAULT '',
+      api_key           VARCHAR(64) UNIQUE NOT NULL,
       verification_code VARCHAR(16),
-      claimed       BOOLEAN DEFAULT FALSE,
-      karma         INTEGER DEFAULT 0,
-      created_at    TIMESTAMPTZ DEFAULT NOW()
+      claimed           BOOLEAN DEFAULT FALSE,
+      twitter_username  VARCHAR(64),
+      twitter_user_id   VARCHAR(64),
+      claimed_at        TIMESTAMPTZ,
+      karma             INTEGER DEFAULT 0,
+      created_at        TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(twitter_user_id)
     )
   `;
 
@@ -99,32 +102,32 @@ export async function initDB() {
     )
   `;
 
-  // Rate limiting table
   await sql`
     CREATE TABLE IF NOT EXISTS rate_limits (
-      id            SERIAL PRIMARY KEY,
       agent_id      INTEGER NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
       action        VARCHAR(32) NOT NULL,
-      created_at    TIMESTAMPTZ DEFAULT NOW()
+      count         INTEGER DEFAULT 1,
+      window_start  TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (agent_id, action)
     )
   `;
 
   // Indexes for performance
   await sql`CREATE INDEX IF NOT EXISTS idx_pinches_author ON pinches(author_id)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_pinches_reply_to ON pinches(reply_to)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_pinches_created ON pinches(created_at DESC)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_pinches_content_search ON pinches USING gin(to_tsvector('english', content))`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_pinches_reply_to ON pinches(reply_to)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_claws_pinch ON claws(pinch_id)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_rate_limits_agent_action ON rate_limits(agent_id, action, created_at)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_hashtags_tag ON hashtags(tag)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_repinches_pinch ON repinches(pinch_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_pinch_hashtags_hashtag ON pinch_hashtags(hashtag_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_agents_twitter ON agents(twitter_user_id)`;
 
-  console.log("✅ Database initialized");
-}
+  // Full-text search index on pinch content
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_pinches_content_fts
+    ON pinches USING gin(to_tsvector('english', content))
+  `;
 
-// Run directly: bun run src/db.ts
-if (import.meta.main) {
-  await initDB();
-  process.exit(0);
+  console.log("✅ Database schema initialized");
 }
