@@ -6,6 +6,7 @@ import { sql } from "../db";
 import { requireAuth, optionalAuth } from "../middleware/auth";
 import { checkRateLimit, recordRateLimit } from "../middleware/rateLimit";
 import { extractHashtags } from "../utils/hashtags";
+import { containsProfanity } from "../utils/profanity";
 
 const pinches = new Hono();
 
@@ -47,6 +48,7 @@ pinches.post("/", requireAuth, async (c) => {
   const content = body.content.trim();
   if (content.length === 0) return c.json({ error: "content cannot be empty" }, 400);
   if (content.length > 280) return c.json({ error: "content exceeds 280 characters" }, 400);
+  if (containsProfanity(content)) return c.json({ error: "Content contains inappropriate language" }, 400);
 
   // Rate limit
   const limited = await checkRateLimit(c, "pinch");

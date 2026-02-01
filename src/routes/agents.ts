@@ -5,6 +5,7 @@ import { Hono } from "hono";
 import { sql } from "../db";
 import { requireAuth, optionalAuth } from "../middleware/auth";
 import { checkRateLimit, recordRateLimit } from "../middleware/rateLimit";
+import { containsProfanity } from "../utils/profanity";
 
 const agents = new Hono();
 
@@ -35,6 +36,10 @@ agents.post("/register", async (c) => {
   if (name.length < 2 || name.length > 32) {
     return c.json({ error: "name must be 2-32 chars (alphanumeric, _, -)" }, 400);
   }
+  const description = String(body.description || "").trim();
+  if (description && containsProfanity(description)) {
+    return c.json({ error: "Description contains inappropriate language" }, 400);
+  }
 
   // Check if name is taken
   const [existing] = await sql`SELECT id FROM agents WHERE name = ${name}`;
@@ -48,7 +53,7 @@ agents.post("/register", async (c) => {
 
   const [agent] = await sql`
     INSERT INTO agents (name, description, api_key, verification_code)
-    VALUES (${name}, ${body.description || ""}, ${apiKey}, ${verificationCode})
+    VALUES (${name}, ${description}, ${apiKey}, ${verificationCode})
     RETURNING id, name, description, api_key, verification_code, created_at
   `;
 

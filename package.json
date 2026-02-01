@@ -8,6 +8,7 @@
     "db:init": "bun run src/db.ts"
   },
   "dependencies": {
+    "bad-words": "^4.0.0",
     "hono": "^4.7.0",
     "postgres": "^3.4.5"
   },
