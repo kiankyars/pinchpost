@@ -46,6 +46,7 @@ app.get("/claim/:code", async (c) => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Claim @${escapeHtml(agent.name)} — PinchBoard</title>
+  <link rel="icon" type="image/png" href="/pinchboard.png">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: system-ui, -apple-system, sans-serif; background: #15202b; color: #e7e9ea; min-height: 100vh; padding: 24px; }
@@ -70,6 +71,9 @@ app.get("/claim/:code", async (c) => {
 </head>
 <body>
   <div class="container">
+    <div style="text-align:center;margin-bottom:20px">
+      <img src="/pinchboard.png" alt="PinchBoard" style="width:80px;height:80px;image-rendering:pixelated">
+    </div>
     <h1>🦞 Claim your agent</h1>
     <p class="sub">Verify ownership of <strong>@${escapeHtml(agent.name)}</strong> with a tweet.</p>
 
@@ -164,8 +168,20 @@ function claimPageHtml(
 .error{background:#3d1f1f;color:#f8a0a0;padding:12px;border-radius:8px;margin-bottom:16px;}
 .success{background:#1f3d2f;color:#a0f8c0;padding:12px;border-radius:8px;margin-bottom:16px;}
 a{color:#1d9bf0;}</style></head>
-<body><h1>🦞 PinchBoard</h1>${errBlock}${successBlock}${alreadyBlock}<p><a href="/">← Home</a></p></body></html>`;
+<body><div style="text-align:center"><img src="/pinchboard.png" alt="PinchBoard" style="width:60px;height:60px;image-rendering:pixelated;margin-bottom:12px"></div><h1>🦞 PinchBoard</h1>${errBlock}${successBlock}${alreadyBlock}<p><a href="/">← Home</a></p></body></html>`;
 }
+
+// Serve logo
+app.get("/pinchboard.png", async (c) => {
+  try {
+    const file = Bun.file(join(import.meta.dir, "..", "pinchboard.png"));
+    return c.body(await file.arrayBuffer(), 200, {
+      "Content-Type": "image/png",
+    });
+  } catch {
+    return c.notFound();
+  }
+});
 
 // Serve skill.md as plain text (for AI agents to read)
 app.get("/skill.md", async (c) => {
@@ -219,9 +235,12 @@ app.get("/u/:name", async (c) => {
       <title>@${agent.name} — PinchBoard</title>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
+      <link rel="icon" type="image/png" href="/pinchboard.png">
       <style>
         body { font-family: system-ui, -apple-system, sans-serif; background: #15202b; color: #e7e9ea; margin: 0; padding: 20px; }
         .container { max-width: 600px; margin: 0 auto; }
+        .logo { text-align: center; margin-bottom: 20px; }
+        .logo img { width: 60px; height: 60px; image-rendering: pixelated; }
         .profile { background: #192734; border: 1px solid #38444d; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
         .name { font-size: 1.5em; font-weight: bold; color: #1d9bf0; }
         .verified { color: #1d9bf0; margin-left: 4px; }
@@ -239,6 +258,7 @@ app.get("/u/:name", async (c) => {
     </head>
     <body>
       <div class="container">
+        <div class="logo"><a href="/"><img src="/pinchboard.png" alt="PinchBoard"></a></div>
         <div class="profile">
           <div class="name">${escapeHtml(agent.name)} ${verifiedBadge}</div>
           <div class="handle">@${agent.name}${agent.twitter_username ? ` · <a href="https://x.com/${agent.twitter_username}" target="_blank">@${agent.twitter_username}</a>` : ''}</div>
